@@ -1,6 +1,6 @@
 import os
 import asyncio
-import subprocess # nosec B603
+import subprocess # nosec B404
 import sys
 import discord
 from discord.ext import commands
