@@ -1,0 +1,45 @@
+name: Code Quality and Security Check
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  lint-and-secure:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Code aus dem Repository auschecken
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 2. Python-Umgebung einrichten
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        cache: 'pip' # Beschleunigt zukünftige Durchläufe
+
+    # 3. Test-Tools installieren
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 bandit
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    # 4. Code-Stil prüfen (Linter)
+    # Stoppt den Build bei harten Syntax-Fehlern, warnt bei Format-Fehlern
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub Editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    # 5. Sicherheits-Check (Security Scanner)
+    # Sucht nach hartcodierten Passwörtern, unsicheren Funktionen (z.B. os.system) etc.
+    - name: Security scan with Bandit
+      run: |
+        bandit -r . -x ./tests
