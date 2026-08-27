@@ -1,6 +1,6 @@
 import os
 import asyncio
-import subprocess # nosec B404
+import subprocess # nosec B603
 import sys
 import discord
 from discord.ext import commands
@@ -20,7 +20,7 @@ def check_dependencies():
     print("[*] SOC Self-Check: Auditing dependencies for vulnerabilities...")
     try:
         # Run pip-audit tool in the active environment
-        result = subprocess.run( # nosec B404
+        result = subprocess.run( # nosec B603
             [sys.executable, "-m", "pip_audit", "--format", "json"],
             capture_output=True, text=True, check=False
         )
