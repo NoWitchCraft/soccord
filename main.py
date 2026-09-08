@@ -45,14 +45,14 @@ class SoccordBot(commands.Bot):
 
 async def main():
     # Validierung des Bot-Tokens
-    if not settings.DISCORD_BOT_TOKEN:
-        print("[!] KRITISCHER FEHLER: DISCORD_BOT_TOKEN fehlt in den Einstellungen / .env Datei!")
+    if not settings.DISCORD_TOKEN:
+        print("[!] KRITISCHER FEHLER: DISCORD_TOKEN fehlt in den Einstellungen / .env Datei!")
         return
 
     bot = SoccordBot()
     
     async with bot:
-        await bot.start(settings.DISCORD_BOT_TOKEN)
+        await bot.start(settings.DISCORD_TOKEN)
 
 
 if __name__ == "__main__":
