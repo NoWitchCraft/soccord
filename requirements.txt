@@ -1,11 +1,5 @@
-<<<<<<< HEAD
 discord.py>=2.3.0
 python-dotenv>=1.0.0
 pip-audit>=2.6.0
 aiohttp>=3.8.0
 psutil>=5.9.0
-=======
-discord.py==2.4.0
-python-dotenv>=1.2.2
-pip-audit==2.7.3
->>>>>>> d5197c4d9754fe58d44f9db2c40f5b72d9d23d9b
