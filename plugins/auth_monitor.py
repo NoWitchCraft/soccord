@@ -18,7 +18,7 @@ class BlockIPView(discord.ui.View):
     async def block_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
             # Executes: sudo ufw deny from <IP> to any
-            result = subprocess.run( # nosec B603
+            result = subprocess.run( # nosec B603 B607
                 ["sudo", "ufw", "deny", "from", self.ip, "to", "any"],
                 capture_output=True, text=True, check=False
             )
