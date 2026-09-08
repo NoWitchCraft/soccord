@@ -20,7 +20,7 @@ Perfect for small teams, developers, and DevOps homelabs who want real-time secu
 ### Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com
+   git clone https://github.com/NoWitchCraft/soccord
    cd soccord
    ```
 2. Create a virtual environment and install dependencies:
