@@ -1,100 +1,62 @@
-<<<<<<< HEAD
 import asyncio
-from config.settings import settings
-from core.bot import SOCBot
-from utils.security import run_dependency_audit
-
-async def main():
-    # 1. Self-audit on startup
-    run_dependency_audit()
-
-    # 2. Initialize and start SOC Bot
-    bot = SOCBot()
-    async with bot:
-        await bot.start(settings.DISCORD_TOKEN)
-
-if __name__ == "__main__":
-    if settings.DISCORD_TOKEN:
-        asyncio.run(main())
-    else:
-        print("[!] Configuration error: DISCORD_TOKEN missing.")
-=======
 import os
-import asyncio
-import subprocess # nosec B404
-import sys
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
+from config.settings import settings
 
-# 1. Load environment variables
-load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
 
-# 2. Initialize Bot with command prefix and intents
-intents = discord.Intents.default()
-intents.message_content = True  # Required if plugins listen to chat messages
-bot = commands.Bot(command_prefix="!", intents=intents)
+class SoccordBot(commands.Bot):
+    def __init__(self):
+        # standardmäßige Intents aktivieren
+        intents = discord.Intents.default()
+        intents.message_content = True  # Erforderlich für Textinteraktionen / Commands
 
-def check_dependencies():
-    """Audits installed Python packages for known security vulnerabilities."""
-    print("[*] SOC Self-Check: Auditing dependencies for vulnerabilities...")
-    try:
-        # Run pip-audit tool in the active environment
-        result = subprocess.run( # nosec B603
-            [sys.executable, "-m", "pip_audit", "--format", "json"],
-            capture_output=True, text=True, check=False
+        super().__init__(
+            command_prefix="!",
+            intents=intents,
+            help_command=None
         )
+
+    async def setup_hook(self):
+        """Wird aufgerufen, bevor der Bot sich mit Discord verbindet.
+        Lädt dynamisch alle Plugins aus dem plugins/-Ordner.
+        """
+        print("[*] Lade Plugins...")
         
-        if result.returncode == 0:
-            print("[+] SOC Self-Check passed: No known vulnerabilities found in dependencies.")
-            return True
+        # Gehe durch den Ordner 'plugins' und lade alle Python-Dateien
+        plugins_dir = os.path.join(os.path.dirname(__file__), "plugins")
+        
+        if os.path.exists(plugins_dir):
+            for filename in os.listdir(plugins_dir):
+                if filename.endswith(".py") and not filename.startswith("__"):
+                    plugin_name = f"plugins.{filename[:-3]}"
+                    try:
+                        await self.load_extension(plugin_name)
+                        print(f"  [+] Plugin geladen: {plugin_name}")
+                    except Exception as e:
+                        print(f"  [!] Fehler beim Laden von {plugin_name}: {e}")
         else:
-            print("[🚨] WARNING: Security vulnerabilities detected in your Python packages!")
-            print(result.stdout)  # Prints the found CVEs in JSON format
-            return False
-            
-    except FileNotFoundError:
-        print("[!] Error: 'pip-audit' is not installed or not found in PATH.")
-        return False
+            print("[!] Warnung: Ordner 'plugins/' wurde nicht gefunden.")
 
-async def load_plugins():
-    """Dynamically loads all Python files inside the plugins/ folder as extensions."""
-    plugins_dir = "./plugins"
-    if not os.path.exists(plugins_dir):
-        os.makedirs(plugins_dir)
-        print(f"[*] Created missing directory '{plugins_dir}'. Please place your plugins here.")
-        return
+    async def on_ready(self):
+        print(f"\n[✓] Bot erfolgreich eingeloggt als {self.user} (ID: {self.user.id})")
+        print("[*] Soccord Security Monitor ist aktiv.\n")
 
-    print("[*] Loading plugins...")
-    for filename in os.listdir(plugins_dir):
-        if filename.endswith(".py") and filename != "__init__.py":
-            plugin_name = f"plugins.{filename[:-3]}"
-            try:
-                await bot.load_extension(plugin_name)
-                print(f"[+] Plugin loaded successfully: {plugin_name}")
-            except Exception as e:
-                print(f"[!] Error loading {plugin_name}: {e}")
-
-@bot.event
-async def on_ready():
-    print(f"[+] SOC Bot logged in as {bot.user}")
-    print("[🛡️] SOC framework is fully operational and protected.")
 
 async def main():
-    # Run the dependency audit first
-    check_dependencies()
+    # Validierung des Bot-Tokens
+    if not settings.DISCORD_BOT_TOKEN:
+        print("[!] KRITISCHER FEHLER: DISCORD_BOT_TOKEN fehlt in den Einstellungen / .env Datei!")
+        return
+
+    bot = SoccordBot()
     
-    # Load all modular plugins
-    await load_plugins()
-    
-    # Start the Discord bot
     async with bot:
-        await bot.start(TOKEN)
+        await bot.start(settings.DISCORD_BOT_TOKEN)
+
 
 if __name__ == "__main__":
-    if not TOKEN:
-        print("[!] Configuration Error: DISCORD_TOKEN missing in .env file!")
-    else:
+    try:
         asyncio.run(main())
->>>>>>> d5197c4d9754fe58d44f9db2c40f5b72d9d23d9b
+    except KeyboardInterrupt:
+        print("\n[*] Bot wurde vom Benutzer beendet.")
