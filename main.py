@@ -49,6 +49,10 @@ async def main():
         print("[!] KRITISCHER FEHLER: DISCORD_TOKEN fehlt in den Einstellungen / .env Datei!")
         return
 
+    if not settings.DISCORD_CHANNEL_ID:
+        print("[!] KRITISCHER FEHLER: DISCORD_CHANNEL_ID fehlt in den Einstellungen / .env Datei!")
+        return
+
     bot = SoccordBot()
     
     async with bot:

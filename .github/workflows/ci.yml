@@ -43,3 +43,8 @@ jobs:
     - name: Security scan with Bandit
       run: |
         bandit -r . -x ./tests
+
+    # 6. Dependency vulnerability audit
+    - name: Dependency vulnerability audit
+      run: |
+        python -c "from utils.security import run_dependency_audit; import sys; sys.exit(0 if run_dependency_audit() else 1)"

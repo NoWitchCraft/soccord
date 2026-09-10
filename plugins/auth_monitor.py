@@ -1,3 +1,4 @@
+import ipaddress
 import os
 import asyncio
 import re
@@ -16,6 +17,14 @@ class BlockIPView(discord.ui.View):
 
     @discord.ui.button(label="🚫 Block IP (UFW)", style=discord.ButtonStyle.danger)
     async def block_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            ipaddress.ip_address(self.ip)
+        except ValueError:
+            await interaction.response.send_message(
+                f"❌ **Refusing to run firewall command: `{self.ip}` is not a valid IP address.**", ephemeral=True
+            )
+            return
+
         try:
             # Executes: sudo ufw deny from <IP> to any
             result = subprocess.run( # nosec B603 B607
@@ -108,17 +117,29 @@ class AuthMonitor(commands.Cog):
 
         print(f"[*] AuthMonitor Plugin: Monitoring {self.log_path}...")
         try:
-            with open(self.log_path, "r", encoding="utf-8", errors="ignore") as f:
-                # Move pointer to end of file to ignore past events
-                f.seek(0, os.SEEK_END)
-                while True:
-                    line = f.readline()
-                    if not line:
-                        await asyncio.sleep(1)
-                        continue
-                    await self.parse_line(line, channel)
+            f = open(self.log_path, "r", encoding="utf-8", errors="ignore")
+            f.seek(0, os.SEEK_END)  # Move pointer to end of file to ignore past events
         except (FileNotFoundError, PermissionError) as e:
             print(f"[!] AuthMonitor Plugin critical failure: {e}")
+            return
+
+        try:
+            while True:
+                line = f.readline()
+                if line:
+                    await self.parse_line(line, channel)
+                    continue
+
+                await asyncio.sleep(1)
+                # Log-Rotation erkennen: Datei wurde vom System ersetzt (z.B. durch logrotate)
+                try:
+                    if os.stat(self.log_path).st_ino != os.fstat(f.fileno()).st_ino:
+                        f.close()
+                        f = open(self.log_path, "r", encoding="utf-8", errors="ignore")
+                except (FileNotFoundError, PermissionError):
+                    continue
+        finally:
+            f.close()
 
 
 async def setup(bot):
